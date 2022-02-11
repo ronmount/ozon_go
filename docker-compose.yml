@@ -1,0 +1,76 @@
+version: "3.8"
+services:
+  psql_database:
+    image: postgres
+    restart: on-failure
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - data:/var/lib/postgresql/data
+    profiles:
+      - postgresql
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+
+  psql_migrate:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    env_file:
+      - .env
+    command: -path ./migrations -database postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@psql_database:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable up 1
+    depends_on:
+      psql_database:
+        condition: service_healthy
+    profiles:
+      - postgresql
+
+  redis_database:
+    image: redis
+    restart: on-failure
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    profiles:
+      - redis
+    command: redis-server --bind redis_database
+
+  backend_redis:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - STORAGE_TYPE=redis
+      - REDIS_HOST=redis_database
+    depends_on:
+      - redis_database
+    profiles:
+      - redis
+    networks:
+      - default
+    links:
+      - redis_database
+
+  backend_postgresql:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - STORAGE_TYPE=postgresql
+      - POSTGRES_HOST=psql_database
+    depends_on:
+      - psql_database
+      - psql_migrate
+    profiles:
+      - postgresql
+    networks:
+      - default
+
+volumes:
+  data:

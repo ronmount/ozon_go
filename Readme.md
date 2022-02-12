@@ -26,10 +26,7 @@
    ```
    Возможные ответы:
    ```json lines
-   201 - Created
-   {"full_link":"https://www.example.com","short_link":"xR1BZQhdhG"}
-   
-   409 - Conflict
+   200 - OK
    {"full_link":"https://www.example.com","short_link":"xR1BZQhdhG"}
    
    500 - Internal Server Error
@@ -53,10 +50,14 @@
 ```shell
 git clone https://github.com/ronmount/ozon_go.git && cd ozon_go
 
+# Запуск тестов:
+make test
+
 # Запуск с хранилищем Redis:
-docker-compose --profile redis up
+make redis
+
 # Запуск с хранилищем Postgres:
-docker-compose --profile postgresql up
+make postgresql
 ```
 
 ## Примеры запросов:
@@ -68,6 +69,5 @@ curl --request POST \
   --data url=https://ozon.ru/
   
 # Получение длинной ссылки
-curl --request GET \ 
-  --url http://localhost:8080/shortener/XSHC0bWFda
+curl --request GET --url http://localhost:8080/shortener/XSHC0bWFda
 ```

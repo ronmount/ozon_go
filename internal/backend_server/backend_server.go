@@ -20,18 +20,6 @@ type backendServer struct {
 	router  *mux.Router
 }
 
-func handleErrors(w http.ResponseWriter, err error) {
-	var status int
-
-	if errors.As(err, &my_errors.HTTP404{}) {
-		status = http.StatusNotFound
-	} else if errors.As(err, &my_errors.HTTP500{}) {
-		status = http.StatusInternalServerError
-	}
-	log.Error(status)
-	http.Error(w, "", status)
-}
-
 func NewServer() (*backendServer, error) {
 	mode := os.Getenv("STORAGE_TYPE")
 	if len(mode) == 0 {
@@ -65,7 +53,7 @@ func NewServer() (*backendServer, error) {
 	return &server, nil
 }
 
-func sendJSON(w http.ResponseWriter, v interface{}) {
+func SendJSON(w http.ResponseWriter, v interface{}) {
 	log.Info(v)
 	if answer, err := json.Marshal(v); err == nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -75,14 +63,26 @@ func sendJSON(w http.ResponseWriter, v interface{}) {
 	}
 }
 
+func handleErrors(w http.ResponseWriter, err error) {
+	var status int
+
+	if errors.As(err, &my_errors.HTTP404{}) {
+		status = http.StatusNotFound
+	} else if errors.As(err, &my_errors.HTTP500{}) {
+		status = http.StatusInternalServerError
+	}
+	log.Error(status)
+	http.Error(w, "", status)
+}
+
 func (b *backendServer) createShortLinkHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
+	log.Info(r.URL.Path)
 
 	if fullLink := r.FormValue("url"); len(fullLink) > 0 {
 		if links, err := b.storage.AddURL(fullLink); err != nil {
 			handleErrors(w, err)
 		} else {
-			sendJSON(w, links)
+			SendJSON(w, links)
 		}
 	} else {
 		handleErrors(w, my_errors.HTTP500{})
@@ -90,13 +90,13 @@ func (b *backendServer) createShortLinkHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (b *backendServer) getFullLinkHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
+	log.Info(r.URL.Path)
 
 	if shortLink, keyExists := mux.Vars(r)["url"]; keyExists {
 		if links, err := b.storage.GetURL(shortLink); err != nil {
 			handleErrors(w, err)
 		} else {
-			sendJSON(w, links)
+			SendJSON(w, links)
 		}
 	} else {
 		handleErrors(w, my_errors.HTTP500{})

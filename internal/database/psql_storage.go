@@ -37,12 +37,12 @@ func NewPSQLStorage(config pgx.ConnPoolConfig) (*PSQLStorage, error) {
 	}
 }
 
-func (dbs *PSQLStorage) checkLinkAlreadyExists(fullLink string) (interface{}, error) {
-	conn, err := dbs.pool.Acquire()
+func (ps *PSQLStorage) checkLinkAlreadyExists(fullLink string) (interface{}, error) {
+	conn, err := ps.pool.Acquire()
 	if err != nil {
 		return nil, err
 	}
-	defer dbs.pool.Release(conn)
+	defer ps.pool.Release(conn)
 
 	var shortLink string
 	err = conn.QueryRow(selectShortByFull, fullLink).Scan(&shortLink)
@@ -53,19 +53,19 @@ func (dbs *PSQLStorage) checkLinkAlreadyExists(fullLink string) (interface{}, er
 	}
 }
 
-func (dbs *PSQLStorage) AddURL(fullLink string) (interface{}, error) {
+func (ps *PSQLStorage) AddURL(fullLink string) (interface{}, error) {
 
-	if link, err := dbs.checkLinkAlreadyExists(fullLink); err != nil {
+	if link, err := ps.checkLinkAlreadyExists(fullLink); err != nil {
 		return nil, my_errors.HTTP500{}
 	} else if link != nil {
 		return link, nil
 	}
 
-	conn, err := dbs.pool.Acquire()
+	conn, err := ps.pool.Acquire()
 	if err != nil {
 		return nil, my_errors.HTTP500{}
 	}
-	defer dbs.pool.Release(conn)
+	defer ps.pool.Release(conn)
 
 	if shortLink, err := tools.GenerateToken(); err != nil {
 		return nil, my_errors.HTTP500{}
@@ -76,12 +76,12 @@ func (dbs *PSQLStorage) AddURL(fullLink string) (interface{}, error) {
 	}
 }
 
-func (dbs *PSQLStorage) GetURL(shortLink string) (interface{}, error) {
-	conn, err := dbs.pool.Acquire()
+func (ps *PSQLStorage) GetURL(shortLink string) (interface{}, error) {
+	conn, err := ps.pool.Acquire()
 	if err != nil {
 		return nil, my_errors.HTTP500{}
 	}
-	defer dbs.pool.Release(conn)
+	defer ps.pool.Release(conn)
 
 	var fullLink string
 	err = conn.QueryRow(selectFullByShort, shortLink).Scan(&fullLink)

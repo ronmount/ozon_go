@@ -10,7 +10,7 @@ test:
 		@go test ./internal/tools
 
 $(PG):
-		docker-compose --profile postgresql up -- build
+		docker-compose --profile postgresql up --build
 
 
 $(REDIS):

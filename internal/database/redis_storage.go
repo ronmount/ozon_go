@@ -5,9 +5,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/ronmount/ozon_go/internal/config_parser"
 	"github.com/ronmount/ozon_go/internal/models"
+	"github.com/ronmount/ozon_go/internal/my_errors"
 	"github.com/ronmount/ozon_go/internal/tools"
-	"log"
-	"net/http"
 )
 
 type RedisStorage struct {
@@ -16,57 +15,60 @@ type RedisStorage struct {
 	shortAsKey *redis.Client
 }
 
-func NewRedisStorage() *RedisStorage {
+func NewRedisStorage() (*RedisStorage, error) {
 	rs := &RedisStorage{}
 	rs.ctx = context.Background()
-	redisURL := config_parser.LoadRedisConfigs()
+	redisURL, err := config_parser.LoadRedisConfigs()
+	if err != nil {
+		return nil, err
+	}
 	rs.fullAsKey = redis.NewClient(&redis.Options{
-		Addr: redisURL,
+		Addr: redisURL.(string),
 		DB:   0,
 	})
 	rs.shortAsKey = redis.NewClient(&redis.Options{
-		Addr: redisURL,
+		Addr: redisURL.(string),
 		DB:   1,
 	})
-	if e1, e2 := rs.fullAsKey.Ping(rs.ctx).Err(), rs.shortAsKey.Ping(rs.ctx).Err(); e1 != nil || e2 != nil {
-		log.Fatalln("Connecting to Redis failed.")
-	} else {
-		log.Println("Redis successfully connected.")
-	}
 
-	return rs
+	if err := rs.fullAsKey.Ping(rs.ctx).Err(); err != nil {
+		return nil, err
+	} else if err = rs.fullAsKey.Ping(rs.ctx).Err(); err != nil {
+		return nil, err
+	}
+	return rs, nil
 }
 
-func (rs *RedisStorage) AddURL(fullLink string) (interface{}, int) {
+func (rs *RedisStorage) AddURL(fullLink string) (interface{}, error) {
 	var (
 		response interface{}
-		status   int
+		err      error
 	)
 
-	if alreadySavedLink, err := rs.fullAsKey.Get(rs.ctx, fullLink).Result(); err == nil {
-		response, status = models.Link{FullLink: fullLink, ShortLink: alreadySavedLink}, http.StatusConflict
-	} else if shortLink, err := tools.GenerateToken(); err == nil {
+	if alreadySavedLink, e := rs.fullAsKey.Get(rs.ctx, fullLink).Result(); e == nil {
+		response, err = models.Link{FullLink: fullLink, ShortLink: alreadySavedLink}, nil
+	} else if shortLink, e := tools.GenerateToken(); e == nil {
 		rs.fullAsKey.Set(rs.ctx, fullLink, shortLink, 0)
 		rs.shortAsKey.Set(rs.ctx, shortLink, fullLink, 0)
-		response, status = models.Link{FullLink: fullLink, ShortLink: shortLink}, http.StatusCreated
+		response, err = models.Link{FullLink: fullLink, ShortLink: shortLink}, nil
 	} else {
-		response, status = nil, http.StatusInternalServerError
+		response, err = nil, my_errors.HTTP500{}
 	}
 
-	return response, status
+	return response, err
 }
 
-func (rs *RedisStorage) GetURL(shortLink string) (interface{}, int) {
+func (rs *RedisStorage) GetURL(shortLink string) (interface{}, error) {
 	var (
 		response interface{}
-		status   int
+		err      error
 	)
 
-	if fullLink, err := rs.shortAsKey.Get(rs.ctx, shortLink).Result(); err == nil {
-		response, status = models.Link{FullLink: fullLink, ShortLink: shortLink}, http.StatusOK
+	if fullLink, e := rs.shortAsKey.Get(rs.ctx, shortLink).Result(); e == nil {
+		response, err = models.Link{FullLink: fullLink, ShortLink: shortLink}, nil
 	} else {
-		response, status = nil, http.StatusNotFound
+		response, err = nil, my_errors.HTTP404{}
 	}
 
-	return response, status
+	return response, err
 }

@@ -1,10 +1,10 @@
 package config_parser
 
 import (
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx"
 	"github.com/joho/godotenv"
-	"log"
 	"os"
 	"strconv"
 )
@@ -14,24 +14,24 @@ func isNumeric(s string) bool {
 	return err == nil
 }
 
-func LoadRedisConfigs() string {
+func LoadRedisConfigs() (interface{}, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	RedisHost := os.Getenv("REDIS_HOST")
 	RedisPort := os.Getenv("REDIS_PORT")
 	if len(RedisHost) == 0 || len(RedisPort) == 0 || !isNumeric(RedisPort) {
-		log.Fatal("Broken env.")
+		return nil, errors.New("broken env")
 	}
 	config := fmt.Sprintf("%s:%s", RedisHost, RedisPort)
-	return config
+	return config, nil
 }
 
-func LoadPSQLConfigs() *pgx.ConnPoolConfig {
+func LoadPSQLConfigs() (*pgx.ConnPoolConfig, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	PgHost := os.Getenv("POSTGRES_HOST")
 	PgPort := os.Getenv("POSTGRES_PORT")
@@ -40,7 +40,7 @@ func LoadPSQLConfigs() *pgx.ConnPoolConfig {
 	PgPassword := os.Getenv("POSTGRES_PASSWORD")
 	if len(PgHost) == 0 || len(PgPort) == 0 || len(PgDatabase) == 0 ||
 		len(PgUser) == 0 || len(PgPassword) == 0 || !isNumeric(PgPort) {
-		log.Fatal("Broken env.")
+		return nil, errors.New("broken env")
 	}
 	PgPortInt, _ := strconv.ParseUint(PgPort, 10, 64)
 	config := pgx.ConnPoolConfig{
@@ -51,5 +51,5 @@ func LoadPSQLConfigs() *pgx.ConnPoolConfig {
 			User:     PgUser,
 			Password: PgPassword,
 		}}
-	return &config
+	return &config, nil
 }

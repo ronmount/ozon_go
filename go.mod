@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/joho/godotenv v1.4.0
 	github.com/matoous/go-nanoid v1.5.0
+	github.com/sirupsen/logrus v1.8.1
 )
 
 require (
@@ -20,5 +21,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 	golang.org/x/text v0.3.6 // indirect
 )

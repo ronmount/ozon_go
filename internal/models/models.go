@@ -1,8 +1,8 @@
 package models
 
 type Database interface {
-	AddURL(fullLink string) (interface{}, int)
-	GetURL(shortLink string) (interface{}, int)
+	AddURL(fullLink string) (interface{}, error)
+	GetURL(shortLink string) (interface{}, error)
 }
 
 type Link struct {

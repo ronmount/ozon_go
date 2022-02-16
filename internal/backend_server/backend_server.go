@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gorilla/mux"
-	"github.com/ronmount/ozon_go/internal/config_parser"
 	"github.com/ronmount/ozon_go/internal/database"
 	"github.com/ronmount/ozon_go/internal/models"
 	"github.com/sirupsen/logrus"
@@ -34,11 +33,8 @@ func NewServer() (*backendServer, error) {
 	if mode == "memory" {
 		server.storage, _ = database.NewMemoryStorage()
 	} else if mode == "postgresql" {
-		config, err := config_parser.LoadPSQLConfigs()
-		if err != nil {
-			return nil, models.PSQLStorage{}
-		}
-		server.storage, err = database.NewPSQLStorage(*config)
+		var err error
+		server.storage, err = database.NewPSQLStorage()
 		if err != nil {
 			return nil, models.PSQLStorage{}
 		}

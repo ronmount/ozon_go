@@ -2,7 +2,6 @@ package config_parser
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jackc/pgx"
 	"github.com/joho/godotenv"
 	"os"
@@ -12,20 +11,6 @@ import (
 func isNumeric(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
-}
-
-func LoadRedisConfigs() (interface{}, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, err
-	}
-	RedisHost := os.Getenv("REDIS_HOST")
-	RedisPort := os.Getenv("REDIS_PORT")
-	if len(RedisHost) == 0 || len(RedisPort) == 0 || !isNumeric(RedisPort) {
-		return nil, errors.New("broken env")
-	}
-	config := fmt.Sprintf("%s:%s", RedisHost, RedisPort)
-	return config, nil
 }
 
 func LoadPSQLConfigs() (*pgx.ConnPoolConfig, error) {

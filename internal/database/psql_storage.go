@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/jackc/pgx"
+	"github.com/ronmount/ozon_go/internal/config_parser"
 	"github.com/ronmount/ozon_go/internal/models"
 	"github.com/ronmount/ozon_go/internal/tools"
 )
@@ -28,8 +29,12 @@ type PSQLStorage struct {
 	pool *pgx.ConnPool
 }
 
-func NewPSQLStorage(config pgx.ConnPoolConfig) (*PSQLStorage, error) {
-	if pool, err := pgx.NewConnPool(config); err == nil {
+func NewPSQLStorage() (*PSQLStorage, error) {
+	config, err := config_parser.LoadPSQLConfigs()
+	if err != nil {
+		return nil, err
+	}
+	if pool, err := pgx.NewConnPool(*config); err == nil {
 		return &PSQLStorage{pool}, nil
 	} else {
 		return nil, err

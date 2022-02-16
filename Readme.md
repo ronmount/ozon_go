@@ -53,8 +53,8 @@ git clone https://github.com/ronmount/ozon_go.git && cd ozon_go
 # Запуск тестов:
 make test
 
-# Запуск с хранилищем Redis:
-make redis
+# Запуск с in-memory хранилищем:
+make memory
 
 # Запуск с хранилищем Postgres:
 make postgresql

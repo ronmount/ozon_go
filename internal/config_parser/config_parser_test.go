@@ -31,24 +31,3 @@ func TestLoadPSQLConfigs(t *testing.T) {
 	_, err = LoadPSQLConfigs()
 	require.Error(t, err, "Should be an error")
 }
-
-func TestLoadRedisConfigs(t *testing.T) {
-	data := []byte("REDIS_HOST=localhost\nREDIS_PORT=6379")
-	os.WriteFile(".env", data, 0644)
-	expectedConfig := "localhost:6379"
-	actualConfig, err := LoadRedisConfigs()
-	require.NoError(t, err, "Should be no error")
-	require.Equal(t, expectedConfig, actualConfig, "Should be equal to expectedConfig")
-	os.Remove(".env")
-
-	t.Log("When broken config")
-	data = []byte("I am broken")
-	os.WriteFile(".env", data, 0644)
-	_, err = LoadPSQLConfigs()
-	require.Error(t, err, "Should be an error")
-	os.Remove(".env")
-
-	t.Log("When no .env")
-	_, err = LoadPSQLConfigs()
-	require.Error(t, err, "Should be an error")
-}

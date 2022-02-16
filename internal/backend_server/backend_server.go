@@ -7,7 +7,6 @@ import (
 	"github.com/ronmount/ozon_go/internal/config_parser"
 	"github.com/ronmount/ozon_go/internal/database"
 	"github.com/ronmount/ozon_go/internal/models"
-	"github.com/ronmount/ozon_go/internal/my_errors"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -23,7 +22,7 @@ type backendServer struct {
 func NewServer() (*backendServer, error) {
 	mode := os.Getenv("STORAGE_TYPE")
 	if len(mode) == 0 {
-		return nil, my_errors.MissingStorageType{}
+		return nil, models.MissingStorageType{}
 	}
 
 	server := backendServer{}
@@ -32,23 +31,19 @@ func NewServer() (*backendServer, error) {
 	server.router.HandleFunc("/shortener/", server.createShortLinkHandler).Methods("POST")
 	server.router.HandleFunc("/shortener/{url:[a-zA-Z0-9_]+}", server.getFullLinkHandler).Methods("GET")
 
-	var err error
-	if mode == "redis" {
-		server.storage, err = database.NewRedisStorage()
-		if err != nil {
-			return nil, my_errors.RedisStorage{}
-		}
+	if mode == "memory" {
+		server.storage, _ = database.NewMemoryStorage()
 	} else if mode == "postgresql" {
 		config, err := config_parser.LoadPSQLConfigs()
 		if err != nil {
-			return nil, my_errors.PSQLStorage{}
+			return nil, models.PSQLStorage{}
 		}
 		server.storage, err = database.NewPSQLStorage(*config)
 		if err != nil {
-			return nil, my_errors.PSQLStorage{}
+			return nil, models.PSQLStorage{}
 		}
 	} else {
-		return nil, my_errors.WrongStorageType{}
+		return nil, models.WrongStorageType{}
 	}
 	return &server, nil
 }
@@ -59,16 +54,16 @@ func SendJSON(w http.ResponseWriter, v interface{}) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(answer)
 	} else {
-		handleErrors(w, my_errors.HTTP500{})
+		handleErrors(w, models.HTTP500{})
 	}
 }
 
 func handleErrors(w http.ResponseWriter, err error) {
 	var status int
 
-	if errors.As(err, &my_errors.HTTP404{}) {
+	if errors.As(err, &models.HTTP404{}) {
 		status = http.StatusNotFound
-	} else if errors.As(err, &my_errors.HTTP500{}) {
+	} else if errors.As(err, &models.HTTP500{}) {
 		status = http.StatusInternalServerError
 	}
 	log.Error(status)
@@ -85,7 +80,7 @@ func (b *backendServer) createShortLinkHandler(w http.ResponseWriter, r *http.Re
 			SendJSON(w, links)
 		}
 	} else {
-		handleErrors(w, my_errors.HTTP500{})
+		handleErrors(w, models.HTTP500{})
 	}
 }
 
@@ -99,13 +94,13 @@ func (b *backendServer) getFullLinkHandler(w http.ResponseWriter, r *http.Reques
 			SendJSON(w, links)
 		}
 	} else {
-		handleErrors(w, my_errors.HTTP500{})
+		handleErrors(w, models.HTTP500{})
 	}
 }
 
 func (b *backendServer) Run() error {
 	if err := http.ListenAndServe("0.0.0.0:8080", b.router); err != nil {
-		return my_errors.RunError{}
+		return models.RunError{}
 	}
 	return nil
 }

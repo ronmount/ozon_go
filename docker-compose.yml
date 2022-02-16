@@ -28,32 +28,18 @@ services:
     profiles:
       - postgresql
 
-  redis_database:
-    image: redis
-    restart: on-failure
-    ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
-    profiles:
-      - redis
-    command: redis-server --bind redis_database
-
-  backend_redis:
+  backend_memory:
     build: .
     ports:
       - "8080:8080"
     env_file:
       - .env
     environment:
-      - STORAGE_TYPE=redis
-      - REDIS_HOST=redis_database
-    depends_on:
-      - redis_database
+      - STORAGE_TYPE=memory
     profiles:
-      - redis
+      - memory
     networks:
       - default
-    links:
-      - redis_database
 
   backend_postgresql:
     build: .

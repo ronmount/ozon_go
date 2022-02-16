@@ -1,8 +1,8 @@
 PG = postgresql
-REDIS = redis
+MEMORY = memory
 
 all:
-		@echo "Specify storage type: make postgresql or make redis"
+		@echo "Specify storage type: make postgresql or make memory"
 
 test:
 		@echo "Running tests...."
@@ -13,5 +13,5 @@ $(PG):
 		docker-compose --profile postgresql up --build
 
 
-$(REDIS):
-		docker-compose --profile redis up --build
+$(MEMORY):
+		docker-compose --profile memory up --build

@@ -1,4 +1,4 @@
-package my_errors
+package models
 
 type HTTP404 struct {
 	error
@@ -9,10 +9,6 @@ type HTTP500 struct {
 }
 
 type PSQLStorage struct {
-	error
-}
-
-type RedisStorage struct {
 	error
 }
 
